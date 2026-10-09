@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streamora | Séries e filmes</title>
+  <meta name="description" content="Streamora: demonstração de streaming feita com HTML, Tailwind CSS e JavaScript puro.">
+  <meta name="theme-color" content="#0b0b0f">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { ink: '#0b0b0f', panel: '#17171d', brand: '#e50914' },
+        fontFamily: { sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif'] }
+      } }
+    }
+  </script>
+  <style>
+    body { background:#0b0b0f; color:#f3f3f5; }
+    .no-scrollbar::-webkit-scrollbar { display:none } .no-scrollbar { scrollbar-width:none }
+    .fade-in { animation: fade .5s ease both } @keyframes fade { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+    .pop { animation: pop .25s ease both } @keyframes pop { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:none} }
+    .card { transition: transform .25s ease, box-shadow .25s ease }
+    @media (hover:hover) { .card:hover, .card:focus-within { transform: scale(1.12); z-index:20; box-shadow:0 20px 40px rgba(0,0,0,.6) } .card:hover .card-actions, .card:focus-within .card-actions { opacity:1 } }
+    .card-actions { opacity:0; transition: opacity .2s }
+    @media (hover:none) { .card-actions { display:none } }
+    .hero-shade { background: linear-gradient(to top,#0b0b0f 4%,transparent 55%), linear-gradient(to right,rgba(11,11,15,.9),transparent 65%) }
+    *:focus-visible { outline:2px solid #fff; outline-offset:2px; border-radius:6px }
+    @media (prefers-reduced-motion: reduce) { *{animation:none!important;transition:none!important} }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen">
+  <a href="#rows" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] bg-white text-black px-3 py-2 rounded">Pular para o conteúdo</a>
+
+  <!-- Seleção de perfil -->
+  <section id="profiles" class="min-h-screen flex flex-col items-center justify-center px-4 text-center" aria-labelledby="profTitle">
+    <p class="text-brand font-extrabold tracking-[.25em] text-3xl mb-10">STREAMORA</p>
+    <h1 id="profTitle" class="text-3xl sm:text-5xl font-medium mb-10">Quem está assistindo?</h1>
+    <ul id="profileList" class="flex flex-wrap justify-center gap-6 sm:gap-10"></ul>
+  </section>
+
+  <!-- Aplicação -->
+  <div id="app" class="hidden">
+    <header id="nav" class="fixed top-0 inset-x-0 z-50 transition-colors duration-300 bg-gradient-to-b from-black/80 to-transparent">
+      <div class="flex items-center gap-4 sm:gap-8 px-4 sm:px-12 h-16">
+        <a href="#" id="logo" class="text-brand font-extrabold tracking-[.2em] text-lg sm:text-2xl" aria-label="Streamora, início">STREAMORA</a>
+        <nav class="hidden md:flex gap-5 text-sm" aria-label="Principal">
+          <button data-view="home" class="nav-link">Início</button>
+          <button data-view="Série" class="nav-link">Séries</button>
+          <button data-view="Filme" class="nav-link">Filmes</button>
+          <button data-view="list" class="nav-link">Minha lista <span id="listCount" class="ml-1 text-xs bg-white/20 rounded-full px-1.5">0</span></button>
+        </nav>
+        <div class="ml-auto flex items-center gap-3">
+          <form id="searchForm" role="search" class="flex items-center border border-transparent focus-within:border-white/70 focus-within:bg-black/70 rounded transition-all">
+            <button type="button" id="searchBtn" class="p-2" aria-label="Buscar">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </button>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="Títulos, gêneros, elenco"
+                   class="bg-transparent w-0 focus:w-40 sm:focus:w-64 outline-none text-sm py-1 focus:pr-2" aria-label="Buscar títulos">
+          </form>
+          <button id="switchProfile" class="w-8 h-8 rounded text-sm font-bold grid place-items-center" aria-label="Trocar de perfil"></button>
+        </div>
+      </div>
+      <nav class="md:hidden flex gap-4 px-4 pb-2 text-sm overflow-x-auto no-scrollbar" aria-label="Principal (celular)">
+        <button data-view="home" class="nav-link">Início</button>
+        <button data-view="Série" class="nav-link">Séries</button>
+        <button data-view="Filme" class="nav-link">Filmes</button>
+        <button data-view="list" class="nav-link">Minha lista</button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="hero" class="relative h-[78vh] min-h-[480px] overflow-hidden" aria-label="Destaque"></section>
+      <div id="rows" class="relative z-10 -mt-24 sm:-mt-32 pb-16 space-y-2"></div>
+    </main>
+
+    <footer class="px-4 sm:px-12 py-10 text-xs text-white/50 border-t border-white/10">
+      <p>Streamora é um projeto de demonstração. Títulos, sinopses e artes são fictícios e gerados no navegador. Sem relação com nenhuma plataforma real.</p>
+    </footer>
+  </div>
+
+  <!-- Modal de detalhes -->
+  <div id="modal" class="hidden fixed inset-0 z-[60] bg-black/75 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div id="modalBody" class="pop relative max-w-3xl mx-auto my-6 sm:my-12 bg-panel rounded-xl overflow-hidden shadow-2xl"></div>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-white text-black text-sm font-medium px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity" role="status" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
